@@ -90,16 +90,21 @@ public class ReplaceEXDF {
 									for (EXDFDataset exdfDataset : exh.getDatasets()){
 										// 只限文本内容
 										if(exdfDataset.type == 0){
-											// 打印内容
-											System.out.println(new String(exdfEntryJA.getString(exdfDataset.offset),"UTF-8"));
-											System.out.println(new String(exdfEntryCN.getString(exdfDataset.offset),"UTF-8"));
-											System.out.println();
-											// 更新Chunk指针
-											chunk.seek(exdfDataset.offset);
-											chunk.writeIntBigEndian(newString.length);
-											// 更新文本内容
-											newString = ArrayUtil.append(newString, exdfEntryCN.getString(exdfDataset.offset));
-											newString = ArrayUtil.append(newString, new byte[]{0x00});
+											if(new String(exdfEntryJA.getString(exdfDataset.offset),"UTF-8").startsWith("TEXT_") ||
+													new String(exdfEntryJA.getString(exdfDataset.offset),"UTF-8").startsWith("SYSTEM_")){
+
+											}else {
+												// 打印内容
+												System.out.println(new String(exdfEntryJA.getString(exdfDataset.offset), "UTF-8"));
+												System.out.println(new String(exdfEntryCN.getString(exdfDataset.offset), "UTF-8"));
+												System.out.println();
+												// 更新Chunk指针
+												chunk.seek(exdfDataset.offset);
+												chunk.writeIntBigEndian(newString.length);
+												// 更新文本内容
+												newString = ArrayUtil.append(newString, exdfEntryCN.getString(exdfDataset.offset));
+												newString = ArrayUtil.append(newString, new byte[]{0x00});
+											}
 										}
 									}
 									// 打包整个Entry %4 Padding

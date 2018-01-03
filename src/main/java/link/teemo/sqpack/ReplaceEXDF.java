@@ -1,10 +1,7 @@
 package link.teemo.sqpack;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -75,6 +72,7 @@ public class ReplaceEXDF {
 						HashMap<Integer, byte[]> chsExdList = chs_exd.getEntrys();
 						// 填充中文内容 如果有需要可以自行修改规则
 						for (Entry<Integer, byte[]> listEntry : jaExdList.entrySet()) {
+//							System.out.println(listEntry.getKey());
 							Integer listEntryIndex = listEntry.getKey();
 							if (chsExdList.get(listEntryIndex) != null) {
 								byte[] data = chsExdList.get(listEntryIndex);
@@ -95,21 +93,23 @@ public class ReplaceEXDF {
 
 											}else {
 												// 打印内容
-												System.out.println(new String(exdfEntryJA.getString(exdfDataset.offset), "UTF-8"));
-												System.out.println(new String(exdfEntryCN.getString(exdfDataset.offset), "UTF-8"));
-												System.out.println();
+//												System.out.println(new String(exdfEntryJA.getString(exdfDataset.offset), "UTF-8"));
+//												System.out.println(new String(exdfEntryCN.getString(exdfDataset.offset), "UTF-8"));
+//												System.out.println();
 												// 更新Chunk指针
 												chunk.seek(exdfDataset.offset);
 												chunk.writeIntBigEndian(newString.length);
 												// 更新文本内容
-												newString = ArrayUtil.append(newString, exdfEntryCN.getString(exdfDataset.offset));
+												if(exdfEntryCN.getString(exdfDataset.offset).length > 0) {
+													newString = ArrayUtil.append(newString, exdfEntryCN.getString(exdfDataset.offset));
+												}
 												newString = ArrayUtil.append(newString, new byte[]{0x00});
 											}
 										}
 									}
 									// 打包整个Entry %4 Padding
 									byte[] newEntryBody = ArrayUtil.append(chunk.getWork(), newString);
-									int paddingSize = 4 - ((newEntryBody.length + 6) % 4);
+									int paddingSize = 4 - (newEntryBody.length % 4);
 									paddingSize = paddingSize==0 ? 4 : paddingSize;
 									LERandomBytes entryBody = new LERandomBytes(new byte[newEntryBody.length + paddingSize]);
 									entryBody.write(newEntryBody);
@@ -162,25 +162,4 @@ public class ReplaceEXDF {
 		return data;
 	}
 	
-	public static void main(String arg[]) throws Exception {
-		// 复制input资源到output文件夹
-		File inputFolder = new File("input");
-		if(inputFolder.isDirectory() && inputFolder.list().length > 0) {
-			for(File inputFile : inputFolder.listFiles()) {
-				if(inputFile.isFile()) {
-					LERandomAccessFile lera = new LERandomAccessFile("input" + File.separator + inputFile.getName(), "r");
-					byte[] dist = new byte[(int)lera.length()];
-					lera.readFully(dist);
-					lera.close();
-					FileOutputStream fos = new FileOutputStream(new File("output" + File.separator + inputFile.getName()));
-					fos.write(dist);
-					fos.flush();
-					fos.close();
-				}
-			}
-		}
-		// 汉化
-		System.out.println(FFCRC.ComputeCRC("bgcommon/world/evt/033/collision".getBytes()));
-//		new ReplaceEXDF("output" + File.separator + "0a0000.win32.index", "resource" + File.separator + "0a0000.win32.index").ReplaceSource();
-	}
 }

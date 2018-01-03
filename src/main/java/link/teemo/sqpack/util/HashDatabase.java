@@ -142,7 +142,7 @@ public class HashDatabase {
 
 		Connection connection = null;
 		try {
-			connection = DriverManager.getConnection("jdbc:sqlite:e:/hashlist.db");
+			connection = DriverManager.getConnection("jdbc:sqlite:./hashlist.db");
 		} catch (SQLException e) {
 			System.err.println(e.getMessage());
 			try {

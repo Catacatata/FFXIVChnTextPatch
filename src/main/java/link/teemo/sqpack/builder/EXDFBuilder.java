@@ -1,6 +1,6 @@
 package link.teemo.sqpack.builder;
 
-import java.util.HashMap;
+import java.util.*;
 import java.util.Map.Entry;
 
 import link.teemo.sqpack.util.ArrayUtil;
@@ -35,7 +35,14 @@ public class EXDFBuilder {
 		LERandomBytes header = new LERandomBytes(new byte[8 * 4]);
 		LERandomBytes dataHeader = new LERandomBytes(new byte[headerSize]);
 		LERandomBytes dataBodys = new LERandomBytes(new byte[bodySize]);
-		for (Entry<Integer, byte[]> entry : exdfEntry.entrySet()) {
+		List<Entry<Integer, byte[]>> list = new ArrayList<>(exdfEntry.entrySet());
+		Collections.sort(list, new Comparator<Entry<Integer, byte[]>>() {
+			//升序排序
+			public int compare(Entry<Integer, byte[]> o1, Entry<Integer, byte[]> o2) {
+				return o1.getKey().compareTo(o2.getKey());
+			}
+		});
+		for (Map.Entry<Integer, byte[]> entry : list) {
 			Integer index = entry.getKey();
 			byte[] data = entry.getValue();
 			// header

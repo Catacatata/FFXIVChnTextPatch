@@ -3,7 +3,6 @@ package link.teemo.sqpack.model;
 import java.io.IOException;
 import java.util.HashMap;
 
-import link.teemo.sqpack.util.HashDatabase;
 import link.teemo.sqpack.util.LERandomAccessFile;
 
 public class SqPackIndexFolder {
@@ -16,7 +15,7 @@ public class SqPackIndexFolder {
 		this.numFiles = numFiles;
 		this.files = new HashMap<Integer, SqPackIndexFile>();
 		this.fileIndexOffset = fileIndexOffset;
-		this.name = HashDatabase.getFolder(id);
+		this.name = null;
 		if (this.name == null)
 			this.name = String.format("0x%x", new Object[] { Integer.valueOf(id) });
 	}

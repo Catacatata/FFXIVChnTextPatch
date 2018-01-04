@@ -71,8 +71,12 @@ public class EXDFEntry {
         ByteBuffer buffer = ByteBuffer.wrap(this.data);
         buffer.position(offset);
         int stringOffset = buffer.getInt();
-        buffer.position(datasetChunkSize + stringOffset);
 
+        if(datasetChunkSize + stringOffset >= buffer.limit()){
+            return new byte[0];
+        }
+
+        buffer.position(datasetChunkSize + stringOffset);
         int nullTermPos = -1;
         byte in;
         do in = buffer.get();

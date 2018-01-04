@@ -74,7 +74,6 @@ public class EXHFFile {
                 this.langs[i] = buffer.get();
                 buffer.get();
             }
-            System.out.println("1");
         } catch (BufferUnderflowException localBufferUnderflowException) {
         } catch (BufferOverflowException localBufferOverflowException) {
         }
@@ -90,6 +89,10 @@ public class EXHFFile {
 
     public EXDFPage[] getPages() {
         return pages;
+    }
+
+    public int[] getLangs() {
+        return langs;
     }
 
     public static void main(String[] args) throws Exception{

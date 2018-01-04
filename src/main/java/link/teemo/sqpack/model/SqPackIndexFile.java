@@ -1,7 +1,5 @@
 package link.teemo.sqpack.model;
 
-import link.teemo.sqpack.util.HashDatabase;
-
 public class SqPackIndexFile {
 	public long pt;
 	public int id;
@@ -16,7 +14,7 @@ public class SqPackIndexFile {
 		this.dataOffset = dataOffset;
 		if (loadNames) {
 			if (id2 != -1)
-				this.name = HashDatabase.getFileName(id);
+				this.name = null;
 			if (name == null)
 				this.name = String.format("0x%x", new Object[] { Integer.valueOf(id) });
 		}
@@ -41,7 +39,7 @@ public class SqPackIndexFile {
 	public String getName2() {
 		String name = null;
 		if (id2 != -1)
-			name = HashDatabase.getFileName(id);
+			name = null;
 		if (name == null)
 			name = String.format("~%x", new Object[] { Integer.valueOf(id) });
 		return name;

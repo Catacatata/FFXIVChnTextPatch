@@ -33,7 +33,7 @@ public class ReplaceEXDF {
 	}
 
 	public void replaceSource() throws Exception {
-		String patternStr = "^[a-zA-Z0-9_]*$";
+		String patternStr = "^[A-Z0-9_]*$";
 		Pattern pattern = Pattern.compile(patternStr);
 		System.out.println("Loading Index File...");
 		HashMap<Integer, SqPackIndexFolder> indexSE = new SqPackIndex(pathToIndexSE).resloveIndex();
@@ -121,7 +121,8 @@ public class ReplaceEXDF {
 										for ( EXDFDataset exdfDatasetSE : exhSE.getDatasets()) {
 											// 只限文本内容
 											if (exdfDatasetSE.type == 0) {
-												if (pattern.matcher(new String(exdfEntryJA.getString(exdfDatasetSE.offset), "UTF-8")).find()) {
+												if (pattern.matcher(new String(exdfEntryJA.getString(exdfDatasetSE.offset), "UTF-8")).find()
+														&& new String(exdfEntryJA.getString(exdfDatasetSE.offset), "UTF-8").contains("_")) {
 													// 更新Chunk指针
 													chunk.seek(exdfDatasetSE.offset);
 													chunk.writeIntBigEndian(newString.length);

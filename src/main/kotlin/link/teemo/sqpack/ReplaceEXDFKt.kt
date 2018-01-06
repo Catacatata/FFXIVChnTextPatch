@@ -13,7 +13,6 @@ class ReplaceEXDFKt {
 
     companion object {
         private val ignoreFile = arrayListOf("EXD/Lobby.EXH")
-        private val configFilePath = "conf" + File.separator + "trans.properties"
 
         @JvmStatic
         @Throws(Exception::class)
@@ -35,7 +34,8 @@ class ReplaceEXDFKt {
             ignoreFile.forEach {
                 exhFile.remove(it)
             }
-            Config.setConfigResource("trans", configFilePath)
+            Config.setConfigResource("transtable", "conf" + File.separator + "transtable.properties")
+            Config.setConfigResource("transtring", "conf" + File.separator + "transtring.properties")
             // 遍历替换
             ReplaceEXDF(pathToIndex, resourceFolder + File.separator + "0a0000.win32.index", exhFile, false, panel).replaceSource();
         }

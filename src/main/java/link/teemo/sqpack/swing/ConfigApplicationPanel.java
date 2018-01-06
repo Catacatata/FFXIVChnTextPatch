@@ -168,7 +168,7 @@ public class ConfigApplicationPanel extends JFrame implements ActionListener {
                 Config.setProperty("GamePath", path);
                 Config.setProperty("Language", lang);
                 Config.saveProperty();
-                this.setEnabled(false);
+                this.setVisible(false);
                 new TextPathPanel();
             }else{
                 JOptionPane.showMessageDialog(null, "<html><body>请选择正确的游戏根目录<br />目录预设名为：<br />FINAL FANTASY XIV - A Realm Reborn</body></html>", "路径错误",JOptionPane.ERROR_MESSAGE);

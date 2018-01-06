@@ -44,7 +44,7 @@ public class ReplaceEXDF {
 	}
 
 	public void replaceSource() throws Exception {
-		String patternStr = "^[A-Z0-9_]*$";
+		String patternStr = "^[a-zA-Z0-9_]*$";
 		Pattern pattern = Pattern.compile(patternStr);
 		System.out.println("Loading Index File...");
 		HashMap<Integer, SqPackIndexFolder> indexSE = new SqPackIndex(pathToIndexSE).resloveIndex();
@@ -103,9 +103,6 @@ public class ReplaceEXDF {
 						// 进行CRC存在校验
 						if (indexSE.get(filePatchCRC).getFiles().get(exdFileCRCJA) != null && indexCN.get(filePatchCRC).getFiles().get(exdFileCRCCN) != null) {
 							System.out.println("Replace File : " + fileName.substring(0, fileName.indexOf(".")));
-							if(fileName.contains("VoiceMan_02200")){
-								System.out.println("Stop");
-							}
 							// 提取对应的文本文件
 							SqPackIndexFile exdIndexFileJA = indexSE.get(filePatchCRC).getFiles().get(exdFileCRCJA);
 							SqPackIndexFile exdIndexFileCN = indexCN.get(filePatchCRC).getFiles().get(exdFileCRCCN);
@@ -152,8 +149,11 @@ public class ReplaceEXDF {
 													chunk.writeIntBigEndian(newString.length);
 													// 更新文本内容
 													String transKey = replaceFile.substring(0, replaceFile.lastIndexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex) + "_" + String.valueOf(stringCount + 1);
-													if (Config.getConfigResource("trans") != null && Config.getProperty("trans", transKey) != null){
-														newString = ArrayUtil.append(newString, Base64.decode(Config.getProperty("trans", transKey)));
+													String jaStr = new String(exdfEntryJA.getString(exdfDatasetSE.offset),"UTF-8");
+													if (Config.getConfigResource("transtable") != null && Config.getProperty("transtable", transKey) != null){
+														newString = ArrayUtil.append(newString, Base64.decode(Config.getProperty("transtable", transKey)));
+													}else if (Config.getConfigResource("transtring") != null && Config.getProperty("transtring", jaStr) != null){
+														newString = ArrayUtil.append(newString, Config.getProperty("transtring", jaStr).getBytes("UTF-8"));
 													}else if (exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset).length > 0) {
 														byte[] chBytes = exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset);
 														newString = ArrayUtil.append(newString, convertString(chBytes));
@@ -165,7 +165,6 @@ public class ReplaceEXDF {
 												stringCount ++;
 											}
 										}
-										stringCount = 0;
 										// 打包整个Entry %4 Padding
 										byte[] newEntryBody = ArrayUtil.append(chunk.getWork(), newString);
 										int paddingSize = 4 - (newEntryBody.length % 4);
@@ -175,6 +174,51 @@ public class ReplaceEXDF {
 										// 转成byte[] 存入Map
 										listEntry.setValue(entryBody.getWork());
 									}
+								}else{
+									// 中国版没有 但是国际版有数据的情况
+									EXDFEntry exdfEntryJA = new EXDFEntry(listEntry.getValue(), exhSE.getDatasetChunkSize());
+									LERandomBytes chunk = new LERandomBytes(new byte[exdfEntryJA.getChunk().length]);
+									chunk.write(exdfEntryJA.getChunk());
+									byte[] newString = new byte[0];
+									int stringCount = 0;
+									for ( EXDFDataset exdfDatasetSE : exhSE.getDatasets()) {
+										// 只限文本内容
+										if (exdfDatasetSE.type == 0) {
+											if (pattern.matcher(new String(exdfEntryJA.getString(exdfDatasetSE.offset), "UTF-8")).find()
+													&& new String(exdfEntryJA.getString(exdfDatasetSE.offset), "UTF-8").contains("_")) {
+												// 更新Chunk指针
+												chunk.seek(exdfDatasetSE.offset);
+												chunk.writeIntBigEndian(newString.length);
+												// 不动的的部分
+												newString = ArrayUtil.append(newString, exdfEntryJA.getString(exdfDatasetSE.offset));
+												newString = ArrayUtil.append(newString, new byte[]{0x00});
+											} else {
+												// 更新Chunk指针
+												chunk.seek(exdfDatasetSE.offset);
+												chunk.writeIntBigEndian(newString.length);
+												// 更新文本内容
+												String transKey = replaceFile.substring(0, replaceFile.lastIndexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex) + "_" + String.valueOf(stringCount + 1);
+												String jaStr = new String(exdfEntryJA.getString(exdfDatasetSE.offset),"UTF-8");
+												if (Config.getConfigResource("transtable") != null && Config.getProperty("transtable", transKey) != null){
+													newString = ArrayUtil.append(newString, Base64.decode(Config.getProperty("transtable", transKey)));
+												}else if (Config.getConfigResource("transtring") != null && Config.getProperty("transtring", jaStr) != null){
+													newString = ArrayUtil.append(newString, Config.getProperty("transtring", jaStr).getBytes("UTF-8"));
+												}else {
+													newString = ArrayUtil.append(newString, exdfEntryJA.getString(exdfDatasetSE.offset));
+												}
+												newString = ArrayUtil.append(newString, new byte[]{0x00});
+											}
+											stringCount ++;
+										}
+									}
+									// 打包整个Entry %4 Padding
+									byte[] newEntryBody = ArrayUtil.append(chunk.getWork(), newString);
+									int paddingSize = 4 - (newEntryBody.length % 4);
+									paddingSize = paddingSize == 0 ? 4 : paddingSize;
+									LERandomBytes entryBody = new LERandomBytes(new byte[newEntryBody.length + paddingSize]);
+									entryBody.write(newEntryBody);
+									// 转成byte[] 存入Map
+									listEntry.setValue(entryBody.getWork());
 								}
 							}
 							// 准备好修改好的内容
@@ -323,6 +367,6 @@ public class ReplaceEXDF {
 	}
 
 	public static void main(String[] args) throws Exception{
-		System.out.println(Base64.encode("辣毛专用圣诞熊".getBytes("UTF-8")));
+		System.out.println(Base64.encode("星光熊".getBytes("UTF-8")));
 	}
 }

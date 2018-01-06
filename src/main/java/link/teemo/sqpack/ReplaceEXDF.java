@@ -151,9 +151,9 @@ public class ReplaceEXDF {
 													chunk.seek(exdfDatasetSE.offset);
 													chunk.writeIntBigEndian(newString.length);
 													// 更新文本内容
-													String transKey = fileName.substring(0, fileName.indexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex) + "_" + String.valueOf(stringCount);
-													if (Config.getProperty(transKey) != null){
-														newString = ArrayUtil.append(newString, Base64.decode(Config.getProperty(transKey)));
+													String transKey = replaceFile.substring(0, replaceFile.lastIndexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex) + "_" + String.valueOf(stringCount + 1);
+													if (Config.getConfigResource("trans") != null && Config.getProperty("trans", transKey) != null){
+														newString = ArrayUtil.append(newString, Base64.decode(Config.getProperty("trans", transKey)));
 													}else if (exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset).length > 0) {
 														byte[] chBytes = exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset);
 														newString = ArrayUtil.append(newString, convertString(chBytes));
@@ -320,5 +320,9 @@ public class ReplaceEXDF {
 		}
 
 		return payloadSize;
+	}
+
+	public static void main(String[] args) throws Exception{
+		System.out.println(Base64.encode("辣毛专用圣诞熊".getBytes("UTF-8")));
 	}
 }

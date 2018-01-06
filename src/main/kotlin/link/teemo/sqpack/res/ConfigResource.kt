@@ -4,6 +4,9 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStreamReader
 import java.util.Properties
+import java.io.FileOutputStream
+
+
 
 class ConfigResource {
 
@@ -28,11 +31,16 @@ class ConfigResource {
         this.props!!.load(this.configFile)
     }
 
-    fun setPropperty(name: String, value: String) {
+    fun setProperty(name: String, value: String) {
         if (this.props == null) {
             this.props = Properties()
         }
         this.props!!.put(name, value)
+    }
+    fun saveProperty(path : String){
+        val fos = FileOutputStream(path)
+        this.props!!.store(fos, null)
+        fos.close()
     }
     
 }

@@ -1,17 +1,26 @@
 package link.teemo.sqpack;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import com.github.stuxuhai.jpinyin.ChineseHelper;
 import com.shenou.fs.core.utils.res.Config;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
 import link.teemo.sqpack.builder.BinaryBlockBuilder;
 import link.teemo.sqpack.builder.EXDFBuilder;
 import link.teemo.sqpack.model.*;
+import link.teemo.sqpack.swing.TextPathPanel;
 import link.teemo.sqpack.util.ArrayUtil;
 import link.teemo.sqpack.util.FFCRC;
 import link.teemo.sqpack.util.LERandomAccessFile;
@@ -24,12 +33,14 @@ public class ReplaceEXDF {
 	private String pathToIndexCN;
 	private List<String> fileList;
 	private Boolean ignoreDiff;
+	private TextPathPanel textPathPanel;
 
-	public ReplaceEXDF(String pathToIndexSE, String pathToIndexCN, List<String> fileList, Boolean ignoreDiff) {
+	public ReplaceEXDF(String pathToIndexSE, String pathToIndexCN, List<String> fileList, Boolean ignoreDiff, TextPathPanel textPathPanel) {
 		this.pathToIndexSE = pathToIndexSE;
 		this.pathToIndexCN = pathToIndexCN;
 		this.fileList = fileList;
 		this.ignoreDiff = ignoreDiff;
+		this.textPathPanel = textPathPanel;
 	}
 
 	public void replaceSource() throws Exception {
@@ -44,7 +55,9 @@ public class ReplaceEXDF {
 		long datLength = leDatFile.length();
 		leDatFile.seek(datLength);
 		// 根据传入的文件进行遍历
+        int fileCount = 0;
 		for (String replaceFile : fileList) {
+            textPathPanel.percentShow((double)fileCount++ / (double)fileList.size());
 			if (replaceFile.toUpperCase().endsWith(".EXH")) {
 				System.out.println("Now File : " + replaceFile);
 				if(replaceFile.startsWith("EXD/cut_scene/041/VoiceMan_04100.EXHsdsds")){
@@ -138,11 +151,12 @@ public class ReplaceEXDF {
 													chunk.seek(exdfDatasetSE.offset);
 													chunk.writeIntBigEndian(newString.length);
 													// 更新文本内容
-													String transKey = fileName.substring(0, fileName.indexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex);
+													String transKey = fileName.substring(0, fileName.indexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex) + "_" + String.valueOf(stringCount);
 													if (Config.getProperty(transKey) != null){
-														newString = ArrayUtil.append(newString, Base64.decode(Config.getProperty(transKey).split("|")[stringCount]));
+														newString = ArrayUtil.append(newString, Base64.decode(Config.getProperty(transKey)));
 													}else if (exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset).length > 0) {
-														newString = ArrayUtil.append(newString, exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset));
+														byte[] chBytes = exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset);
+														newString = ArrayUtil.append(newString, convertString(chBytes));
 													} else {
 														newString = ArrayUtil.append(newString, exdfEntryJA.getString(exdfDatasetSE.offset));
 													}
@@ -181,6 +195,55 @@ public class ReplaceEXDF {
 		System.out.println("Replace Complete");
 	}
 
+	private static byte[] convertString(byte[] chBytes){
+
+
+		// 00 54 51 51 02 01 41 03 45 04
+//		if(new String(chBytes).equals("200")){
+//			System.out.println(Config.getProperty("Language"));
+//		}
+
+		if(Config.getProperty("Language").equals("繁體中文") || Config.getProperty("Language").equals("正體中文")) {
+			try {
+				byte[] newStringBytes = new byte[0];
+
+				byte[] chBytesMirror = new byte[chBytes.length];
+
+				ByteBuffer buffIn = ByteBuffer.wrap(chBytes);
+				buffIn.order(ByteOrder.LITTLE_ENDIAN);
+
+				ByteBuffer buffOut = ByteBuffer.wrap(chBytesMirror);
+				buffIn.order(ByteOrder.LITTLE_ENDIAN);
+
+				while (buffIn.hasRemaining()) {
+					byte b = buffIn.get();
+					if (b == 2) {
+						byte[] bytes = new byte[buffOut.position()];
+						buffOut.position(0);
+						buffOut.get(bytes);
+						buffOut.clear();
+						newStringBytes = ArrayUtil.append(newStringBytes, ChineseHelper.convertToTraditionalChinese(new String(bytes, "UTF-8")).getBytes("UTF-8"));
+						newStringBytes = ArrayUtil.append(newStringBytes, processPacket(buffIn));
+					} else {
+						buffOut.put(b);
+					}
+				}
+				if (buffOut.position() != 0) {
+					byte[] bytes = new byte[buffOut.position()];
+					buffOut.position(0);
+					buffOut.get(bytes);
+					buffOut.clear();
+					newStringBytes = ArrayUtil.append(newStringBytes, ChineseHelper.convertToTraditionalChinese(new String(bytes, "UTF-8")).getBytes("UTF-8"));
+				}
+
+
+				return newStringBytes;
+			}catch (Exception e){}
+
+		}
+		return chBytes;
+	}
+
 	private boolean same02Byte(byte[] value, byte[] data) {
 		int vcount = 0 ,dcount = 0;
 		for(int i = 0 ; i < value.length ; i ++) {
@@ -215,5 +278,47 @@ public class ReplaceEXDF {
 			}
 		}
 		return count;
+	}
+	private static byte[] processPacket(ByteBuffer buffIn){
+		byte[] header = new byte[3];
+		int possistion = 0;
+		header[possistion++] = 0x02;
+		header[possistion++] = buffIn.get();
+		header[possistion++] = buffIn.get();
+		int payloadSize = header[2] & 0xFF;
+		if (payloadSize <= 1){
+			return header;
+		}
+		payloadSize = getPayloadSize(payloadSize, buffIn);
+		byte[] payload = new byte[payloadSize];
+		buffIn.get(payload);
+		return ArrayUtil.append(header, payload);
+	}
+	private static int getPayloadSize(int payloadSize, ByteBuffer buffIn)
+	{
+		if (payloadSize < 240) {
+			return payloadSize;
+		}
+		switch (payloadSize)
+		{
+			case 240:
+				int valByte = buffIn.get() & 0xFF;
+				return valByte;
+			case 241:
+				//BUG
+//				return 0;
+			case 242:
+				return buffIn.getShort();
+			case 250:
+				int val24 = 0;
+				val24 |= buffIn.get() << 16;
+				val24 |= buffIn.get() << 8;
+				val24 |= buffIn.get();
+				return val24;
+			case 254:
+				return buffIn.getInt();
+		}
+
+		return payloadSize;
 	}
 }

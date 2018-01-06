@@ -69,6 +69,32 @@ object Config {
     }
 
     @JvmStatic
+    fun setProperty(key: String, value: String): Unit {
+        val defaultConfigResource = getConfigResource()
+        defaultConfigResource?.setProperty(key, value)
+    }
+
+    @JvmStatic
+    fun setProperty(configName: String, key: String, value: String): Unit {
+        val defaultConfigResource = getConfigResource(configName)
+        defaultConfigResource?.setProperty(key, value)
+    }
+
+    @JvmStatic
+    fun saveProperty(): Unit {
+        val configPath = resourceMap!!.get("DefaultConfig")
+        val defaultConfigResource = getConfigResource("DefaultConfig")
+        defaultConfigResource?.saveProperty(configPath!!)
+    }
+
+    @JvmStatic
+    fun saveProperty(configName: String): Unit {
+        val configPath = resourceMap!!.get("configName")
+        val defaultConfigResource = getConfigResource(configName)
+        defaultConfigResource?.saveProperty(configPath!!)
+    }
+
+    @JvmStatic
     fun reloadConfig() {
         try {
             if (resourceMap != null) {

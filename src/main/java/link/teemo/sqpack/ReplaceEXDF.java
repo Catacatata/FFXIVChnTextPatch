@@ -34,6 +34,10 @@ public class ReplaceEXDF {
 	private List<String> fileList;
 	private Boolean ignoreDiff;
 	private TextPathPanel textPathPanel;
+	private boolean cnResourceAvailable;
+	private boolean cnEXHFileAvailable;
+	private boolean cnEXDFileAvailable;
+	private boolean cnEntryAvailable;
 
 	public ReplaceEXDF(String pathToIndexSE, String pathToIndexCN, List<String> fileList, Boolean ignoreDiff, TextPathPanel textPathPanel) {
 		this.pathToIndexSE = pathToIndexSE;
@@ -41,6 +45,7 @@ public class ReplaceEXDF {
 		this.fileList = fileList;
 		this.ignoreDiff = ignoreDiff;
 		this.textPathPanel = textPathPanel;
+		this.cnResourceAvailable = true;
 	}
 
 	public void replaceSource() throws Exception {
@@ -60,9 +65,6 @@ public class ReplaceEXDF {
             textPathPanel.percentShow((double)fileCount++ / (double)fileList.size());
 			if (replaceFile.toUpperCase().endsWith(".EXH")) {
 				System.out.println("Now File : " + replaceFile);
-				if(replaceFile.startsWith("EXD/cut_scene/041/VoiceMan_04100.EXHsdsds")){
-					System.out.println("Stop");
-				}
 				// 准备好文件目录名和文件名
 				String filePatch = replaceFile.substring(0, replaceFile.lastIndexOf("/"));
 				String fileName = replaceFile.substring(replaceFile.lastIndexOf("/") + 1);
@@ -71,165 +73,142 @@ public class ReplaceEXDF {
 				// 计算头文件CRC
 				Integer exhFileCRC = FFCRC.ComputeCRC(fileName.toLowerCase().getBytes());
 				// 解压并且解析头文件
-				if(indexSE.get(filePatchCRC) == null || indexCN.get(filePatchCRC) == null) continue;
+				if(indexSE.get(filePatchCRC) == null) continue;
 				SqPackIndexFile exhIndexFileSE = indexSE.get(filePatchCRC).getFiles().get(exhFileCRC);
-				SqPackIndexFile exhIndexFileCN = indexCN.get(filePatchCRC).getFiles().get(exhFileCRC);
-				if (exhIndexFileSE == null || exhIndexFileCN == null) continue;
+				if (exhIndexFileSE == null) continue;
 				byte[] exhFileSE = extractFile(pathToIndexSE, exhIndexFileSE.getOffset());
-				byte[] exhFileCN = extractFile(pathToIndexCN, exhIndexFileCN.getOffset());
 				EXHFFile exhSE = new EXHFFile(exhFileSE);
-				EXHFFile exhCN = new EXHFFile(exhFileCN);
-				// 添加对照StringDataset
+				EXHFFile exhCN = null;
 				HashMap<EXDFDataset, EXDFDataset> datasetMap = new HashMap();
-				int cnDatasetPossition = 0;
-				if(datasetStringCount(exhSE.getDatasets()) > 0 && datasetStringCount(exhSE.getDatasets()) == datasetStringCount(exhCN.getDatasets())) {
-					for (EXDFDataset datasetSE : exhSE.getDatasets()) {
-						if(datasetSE.type == 0) {
-							while(exhCN.getDatasets()[cnDatasetPossition].type != 0){
-								cnDatasetPossition ++;
+				cnEXHFileAvailable = true;
+				if(cnResourceAvailable) {
+					try {
+						SqPackIndexFile exhIndexFileCN = indexCN.get(filePatchCRC).getFiles().get(exhFileCRC);
+						byte[] exhFileCN = extractFile(pathToIndexCN, exhIndexFileCN.getOffset());
+						exhCN = new EXHFFile(exhFileCN);
+						// 添加对照StringDataset
+						int cnDatasetPossition = 0;
+						if (datasetStringCount(exhSE.getDatasets()) > 0 && datasetStringCount(exhSE.getDatasets()) == datasetStringCount(exhCN.getDatasets())) {
+							for (EXDFDataset datasetSE : exhSE.getDatasets()) {
+								if (datasetSE.type == 0) {
+									while (exhCN.getDatasets()[cnDatasetPossition].type != 0) {
+										cnDatasetPossition++;
+									}
+									datasetMap.put(datasetSE, exhCN.getDatasets()[cnDatasetPossition++]);
+								}
 							}
-							datasetMap.put(datasetSE, exhCN.getDatasets()[cnDatasetPossition++]);
 						}
+					} catch (Exception cnEXHFileException) {
+						cnEXHFileAvailable = false;
 					}
-				}else{
-					continue;
 				}
 				if (exhSE.getLangs().length > 0) {
 					// 根据头文件 轮询资源文件
 					for (EXDFPage exdfPage : exhSE.getPages()) {
 						// 获取资源文件的CRC
 						Integer exdFileCRCJA = FFCRC.ComputeCRC((fileName.replace(".EXH", "_" + String.valueOf(exdfPage.pageNum) + "_JA.EXD")).toLowerCase().getBytes());
-						Integer exdFileCRCCN = FFCRC.ComputeCRC((fileName.replace(".EXH", "_" + String.valueOf(exdfPage.pageNum) + "_CHS.EXD")).toLowerCase().getBytes());
 						// 进行CRC存在校验
-						if (indexSE.get(filePatchCRC).getFiles().get(exdFileCRCJA) != null && indexCN.get(filePatchCRC).getFiles().get(exdFileCRCCN) != null) {
-							System.out.println("Replace File : " + fileName.substring(0, fileName.indexOf(".")));
-							// 提取对应的文本文件
-							SqPackIndexFile exdIndexFileJA = indexSE.get(filePatchCRC).getFiles().get(exdFileCRCJA);
-							SqPackIndexFile exdIndexFileCN = indexCN.get(filePatchCRC).getFiles().get(exdFileCRCCN);
-							byte[] exdFileJA = extractFile(pathToIndexSE, exdIndexFileJA.getOffset());
-							byte[] exdFileCN = extractFile(pathToIndexCN, exdIndexFileCN.getOffset());
-							// 解压本文文件 提取内容
-							EXDFFile ja_exd = new EXDFFile(exdFileJA);
-							EXDFFile chs_exd = new EXDFFile(exdFileCN);
-							HashMap<Integer, byte[]> jaExdList = ja_exd.getEntrys();
-							HashMap<Integer, byte[]> chsExdList = chs_exd.getEntrys();
-							// 填充中文内容 如果有需要可以自行修改规则
-							for (Entry<Integer, byte[]> listEntry : jaExdList.entrySet()) {
-								Integer listEntryIndex = listEntry.getKey();
-								if (chsExdList.get(listEntryIndex) != null) {
+						System.out.println("Replace File : " + fileName.substring(0, fileName.indexOf(".")));
+						// 提取对应的文本文件
+						SqPackIndexFile exdIndexFileJA = indexSE.get(filePatchCRC).getFiles().get(exdFileCRCJA);
+						byte[] exdFileJA = null;
+						try {
+							exdFileJA = extractFile(pathToIndexSE, exdIndexFileJA.getOffset());
+						}catch (Exception jaEXDFileException){
+							continue;
+						}
+						// 解压本文文件 提取内容
+						EXDFFile ja_exd = new EXDFFile(exdFileJA);
+						HashMap<Integer, byte[]> jaExdList = ja_exd.getEntrys();
+						HashMap<Integer, byte[]> chsExdList = null;
+						cnEXDFileAvailable = true;
+						if (cnEXHFileAvailable){
+							try{
+								Integer exdFileCRCCN = FFCRC.ComputeCRC((fileName.replace(".EXH", "_" + String.valueOf(exdfPage.pageNum) + "_CHS.EXD")).toLowerCase().getBytes());
+								SqPackIndexFile exdIndexFileCN = indexCN.get(filePatchCRC).getFiles().get(exdFileCRCCN);
+								byte[] exdFileCN = extractFile(pathToIndexCN, exdIndexFileCN.getOffset());
+								EXDFFile chs_exd = new EXDFFile(exdFileCN);
+								chsExdList = chs_exd.getEntrys();
+							}catch (Exception cnEXDFileException){
+								cnEXDFileAvailable = false;
+							}
+						}
+						// 填充中文内容 如果有需要可以自行修改规则
+						for (Entry<Integer, byte[]> listEntry : jaExdList.entrySet()) {
+							Integer listEntryIndex = listEntry.getKey();
+							EXDFEntry exdfEntryJA = new EXDFEntry(listEntry.getValue(), exhSE.getDatasetChunkSize());
+							EXDFEntry exdfEntryCN = null;
+							cnEntryAvailable = true;
+							if (cnEXDFileAvailable){
+								try{
 									byte[] data = chsExdList.get(listEntryIndex);
+									exdfEntryCN = new EXDFEntry(data, exhCN.getDatasetChunkSize());
 									if (ignoreDiff) {
 										listEntry.setValue(data);
-									} else {
-										// 根据头文件 解析资源文件的内容 并且进行替换
-										EXDFEntry exdfEntryJA = new EXDFEntry(listEntry.getValue(), exhSE.getDatasetChunkSize());
-										EXDFEntry exdfEntryCN = new EXDFEntry(data, exhCN.getDatasetChunkSize());
-										LERandomBytes chunk = new LERandomBytes(new byte[exdfEntryJA.getChunk().length]);
-										chunk.write(exdfEntryJA.getChunk());
-										byte[] newString = new byte[0];
-										int stringCount = 0;
-										for ( EXDFDataset exdfDatasetSE : exhSE.getDatasets()) {
-											// 只限文本内容
-											if (exdfDatasetSE.type == 0) {
-												if (pattern.matcher(new String(exdfEntryJA.getString(exdfDatasetSE.offset), "UTF-8")).find()
-														&& new String(exdfEntryJA.getString(exdfDatasetSE.offset), "UTF-8").contains("_")) {
-													// 更新Chunk指针
-													chunk.seek(exdfDatasetSE.offset);
-													chunk.writeIntBigEndian(newString.length);
-													// 不动的的部分
-													newString = ArrayUtil.append(newString, exdfEntryJA.getString(exdfDatasetSE.offset));
-													newString = ArrayUtil.append(newString, new byte[]{0x00});
-												} else {
-													// 打印内容
-//													System.out.println(new String(exdfEntryJA.getString(exdfDataset.offset), "UTF-8"));
-//													System.out.println(new String(exdfEntryCN.getString(exdfDataset.offset), "UTF-8"));
-//													System.out.println();
-													// 更新Chunk指针
-													chunk.seek(exdfDatasetSE.offset);
-													chunk.writeIntBigEndian(newString.length);
-													// 更新文本内容
-													String transKey = replaceFile.substring(0, replaceFile.lastIndexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex) + "_" + String.valueOf(stringCount + 1);
-													String jaStr = new String(exdfEntryJA.getString(exdfDatasetSE.offset),"UTF-8");
-													if (Config.getConfigResource("transtable") != null && Config.getProperty("transtable", transKey) != null){
-														newString = ArrayUtil.append(newString, Base64.decode(Config.getProperty("transtable", transKey)));
-													}else if (Config.getConfigResource("transtring") != null && Config.getProperty("transtring", jaStr) != null){
-														newString = ArrayUtil.append(newString, Config.getProperty("transtring", jaStr).getBytes("UTF-8"));
-													}else if (exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset).length > 0) {
-														byte[] chBytes = exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset);
-														newString = ArrayUtil.append(newString, convertString(chBytes));
-													} else {
-														newString = ArrayUtil.append(newString, exdfEntryJA.getString(exdfDatasetSE.offset));
-													}
-													newString = ArrayUtil.append(newString, new byte[]{0x00});
-												}
-												stringCount ++;
-											}
-										}
-										// 打包整个Entry %4 Padding
-										byte[] newEntryBody = ArrayUtil.append(chunk.getWork(), newString);
-										int paddingSize = 4 - (newEntryBody.length % 4);
-										paddingSize = paddingSize == 0 ? 4 : paddingSize;
-										LERandomBytes entryBody = new LERandomBytes(new byte[newEntryBody.length + paddingSize]);
-										entryBody.write(newEntryBody);
-										// 转成byte[] 存入Map
-										listEntry.setValue(entryBody.getWork());
+										continue;
 									}
-								}else{
-									// 中国版没有 但是国际版有数据的情况
-									EXDFEntry exdfEntryJA = new EXDFEntry(listEntry.getValue(), exhSE.getDatasetChunkSize());
-									LERandomBytes chunk = new LERandomBytes(new byte[exdfEntryJA.getChunk().length]);
-									chunk.write(exdfEntryJA.getChunk());
-									byte[] newString = new byte[0];
-									int stringCount = 0;
-									for ( EXDFDataset exdfDatasetSE : exhSE.getDatasets()) {
-										// 只限文本内容
-										if (exdfDatasetSE.type == 0) {
-											if (pattern.matcher(new String(exdfEntryJA.getString(exdfDatasetSE.offset), "UTF-8")).find()
-													&& new String(exdfEntryJA.getString(exdfDatasetSE.offset), "UTF-8").contains("_")) {
-												// 更新Chunk指针
-												chunk.seek(exdfDatasetSE.offset);
-												chunk.writeIntBigEndian(newString.length);
-												// 不动的的部分
-												newString = ArrayUtil.append(newString, exdfEntryJA.getString(exdfDatasetSE.offset));
-												newString = ArrayUtil.append(newString, new byte[]{0x00});
-											} else {
-												// 更新Chunk指针
-												chunk.seek(exdfDatasetSE.offset);
-												chunk.writeIntBigEndian(newString.length);
-												// 更新文本内容
-												String transKey = replaceFile.substring(0, replaceFile.lastIndexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex) + "_" + String.valueOf(stringCount + 1);
-												String jaStr = new String(exdfEntryJA.getString(exdfDatasetSE.offset),"UTF-8");
-												if (Config.getConfigResource("transtable") != null && Config.getProperty("transtable", transKey) != null){
-													newString = ArrayUtil.append(newString, Base64.decode(Config.getProperty("transtable", transKey)));
-												}else if (Config.getConfigResource("transtring") != null && Config.getProperty("transtring", jaStr) != null){
-													newString = ArrayUtil.append(newString, Config.getProperty("transtring", jaStr).getBytes("UTF-8"));
-												}else {
-													newString = ArrayUtil.append(newString, exdfEntryJA.getString(exdfDatasetSE.offset));
-												}
-												newString = ArrayUtil.append(newString, new byte[]{0x00});
-											}
-											stringCount ++;
-										}
-									}
-									// 打包整个Entry %4 Padding
-									byte[] newEntryBody = ArrayUtil.append(chunk.getWork(), newString);
-									int paddingSize = 4 - (newEntryBody.length % 4);
-									paddingSize = paddingSize == 0 ? 4 : paddingSize;
-									LERandomBytes entryBody = new LERandomBytes(new byte[newEntryBody.length + paddingSize]);
-									entryBody.write(newEntryBody);
-									// 转成byte[] 存入Map
-									listEntry.setValue(entryBody.getWork());
+								}catch (Exception cnEntryNullException){
+									cnEntryAvailable = false;
 								}
 							}
-							// 准备好修改好的内容
-							byte[] exdfFile = new EXDFBuilder(jaExdList).buildExdf();
-							byte[] exdfBlock = new BinaryBlockBuilder(exdfFile).buildBlock();
-							// 填充修改后的内容到新文件
-							leIndexFile.seek(exdIndexFileJA.getPt() + 8);
-							leIndexFile.writeInt((int) (datLength / 8));
-							datLength += exdfBlock.length;
-							leDatFile.write(exdfBlock);
+							LERandomBytes chunk = new LERandomBytes(new byte[exdfEntryJA.getChunk().length]);
+							chunk.write(exdfEntryJA.getChunk());
+							byte[] newFFXIVString = new byte[0];
+							int stringCount = 0;
+							for ( EXDFDataset exdfDatasetSE : exhSE.getDatasets()) {
+								// 只限文本内容
+								if (exdfDatasetSE.type == 0) {
+									byte[] jaBytes = exdfEntryJA.getString(exdfDatasetSE.offset);
+									String jaStr = new String(jaBytes, "UTF-8");
+									if ( (pattern.matcher(jaStr).find() && jaStr.contains("_"))
+											|| (jaBytes.length > 4 && jaBytes[0] == 0x02 && (jaBytes[1] == 0x28 || jaBytes[1] == 0x40) && ((int)jaBytes[2] + 3 == jaBytes.length)) ) {
+										// 更新Chunk指针
+										chunk.seek(exdfDatasetSE.offset);
+										chunk.writeIntBigEndian(newFFXIVString.length);
+										// 不动的的部分
+										newFFXIVString = ArrayUtil.append(newFFXIVString, jaBytes);
+										newFFXIVString = ArrayUtil.append(newFFXIVString, new byte[]{0x00});
+									} else {
+										// 打印内容
+										// 更新Chunk指针
+										chunk.seek(exdfDatasetSE.offset);
+										chunk.writeIntBigEndian(newFFXIVString.length);
+										// 更新文本内容
+										String transKey = replaceFile.substring(0, replaceFile.lastIndexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex) + "_" + String.valueOf(stringCount + 1);
+										if (Config.getConfigResource("transtable") != null && Config.getProperty("transtable", transKey) != null){
+											newFFXIVString = ArrayUtil.append(newFFXIVString, Base64.decode(Config.getProperty("transtable", transKey)));
+										}else if (Config.getConfigResource("transtring") != null && Config.getProperty("transtring", jaStr) != null){
+											newFFXIVString = ArrayUtil.append(newFFXIVString, Config.getProperty("transtring", jaStr).getBytes("UTF-8"));
+										} else {
+											if (cnEXHFileAvailable && cnEXDFileAvailable && cnEntryAvailable && exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset).length > 0){
+												byte[] chBytes = exdfEntryCN.getString(datasetMap.get(exdfDatasetSE).offset);
+												newFFXIVString = ArrayUtil.append(newFFXIVString, convertString(chBytes));
+											}else {
+												newFFXIVString = ArrayUtil.append(newFFXIVString, jaBytes);
+											}
+										}
+										newFFXIVString = ArrayUtil.append(newFFXIVString, new byte[]{0x00});
+									}
+									stringCount ++;
+								}
+							}
+							// 打包整个Entry %4 Padding
+							byte[] newEntryBody = ArrayUtil.append(chunk.getWork(), newFFXIVString);
+							int paddingSize = 4 - (newEntryBody.length % 4);
+							paddingSize = paddingSize == 0 ? 4 : paddingSize;
+							LERandomBytes entryBody = new LERandomBytes(new byte[newEntryBody.length + paddingSize]);
+							entryBody.write(newEntryBody);
+							// 转成byte[] 存入Map
+							listEntry.setValue(entryBody.getWork());
 						}
+						// 准备好修改好的内容
+						byte[] exdfFile = new EXDFBuilder(jaExdList).buildExdf();
+						byte[] exdfBlock = new BinaryBlockBuilder(exdfFile).buildBlock();
+						// 填充修改后的内容到新文件
+						leIndexFile.seek(exdIndexFileJA.getPt() + 8);
+						leIndexFile.writeInt((int) (datLength / 8));
+						datLength += exdfBlock.length;
+						leDatFile.write(exdfBlock);
 					}
 				}
 			}
@@ -249,7 +228,7 @@ public class ReplaceEXDF {
 
 		if(Config.getProperty("Language").equals("繁體中文") || Config.getProperty("Language").equals("正體中文")) {
 			try {
-				byte[] newStringBytes = new byte[0];
+				byte[] newFFXIVStringBytes = new byte[0];
 
 				byte[] chBytesMirror = new byte[chBytes.length];
 
@@ -266,8 +245,8 @@ public class ReplaceEXDF {
 						buffOut.position(0);
 						buffOut.get(bytes);
 						buffOut.clear();
-						newStringBytes = ArrayUtil.append(newStringBytes, ChineseHelper.convertToTraditionalChinese(new String(bytes, "UTF-8")).getBytes("UTF-8"));
-						newStringBytes = ArrayUtil.append(newStringBytes, processPacket(buffIn));
+						newFFXIVStringBytes = ArrayUtil.append(newFFXIVStringBytes, ChineseHelper.convertToTraditionalChinese(new String(bytes, "UTF-8")).getBytes("UTF-8"));
+						newFFXIVStringBytes = ArrayUtil.append(newFFXIVStringBytes, processPacket(buffIn));
 					} else {
 						buffOut.put(b);
 					}
@@ -277,11 +256,11 @@ public class ReplaceEXDF {
 					buffOut.position(0);
 					buffOut.get(bytes);
 					buffOut.clear();
-					newStringBytes = ArrayUtil.append(newStringBytes, ChineseHelper.convertToTraditionalChinese(new String(bytes, "UTF-8")).getBytes("UTF-8"));
+					newFFXIVStringBytes = ArrayUtil.append(newFFXIVStringBytes, ChineseHelper.convertToTraditionalChinese(new String(bytes, "UTF-8")).getBytes("UTF-8"));
 				}
 
 
-				return newStringBytes;
+				return newFFXIVStringBytes;
 			}catch (Exception e){}
 
 		}

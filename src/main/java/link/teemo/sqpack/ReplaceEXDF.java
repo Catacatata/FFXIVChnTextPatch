@@ -1,14 +1,9 @@
 package link.teemo.sqpack;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -20,7 +15,7 @@ import com.sun.org.apache.xml.internal.security.utils.Base64;
 import link.teemo.sqpack.builder.BinaryBlockBuilder;
 import link.teemo.sqpack.builder.EXDFBuilder;
 import link.teemo.sqpack.model.*;
-import link.teemo.sqpack.swing.TextPathPanel;
+import link.teemo.sqpack.swing.TextPatchPanel;
 import link.teemo.sqpack.util.ArrayUtil;
 import link.teemo.sqpack.util.FFCRC;
 import link.teemo.sqpack.util.LERandomAccessFile;
@@ -33,18 +28,18 @@ public class ReplaceEXDF {
 	private String pathToIndexCN;
 	private List<String> fileList;
 	private Boolean ignoreDiff;
-	private TextPathPanel textPathPanel;
+	private TextPatchPanel textPatchPanel;
 	private boolean cnResourceAvailable;
 	private boolean cnEXHFileAvailable;
 	private boolean cnEXDFileAvailable;
 	private boolean cnEntryAvailable;
 
-	public ReplaceEXDF(String pathToIndexSE, String pathToIndexCN, List<String> fileList, Boolean ignoreDiff, TextPathPanel textPathPanel) {
+	public ReplaceEXDF(String pathToIndexSE, String pathToIndexCN, List<String> fileList, Boolean ignoreDiff, TextPatchPanel textPatchPanel) {
 		this.pathToIndexSE = pathToIndexSE;
 		this.pathToIndexCN = pathToIndexCN;
 		this.fileList = fileList;
 		this.ignoreDiff = ignoreDiff;
-		this.textPathPanel = textPathPanel;
+		this.textPatchPanel = textPatchPanel;
 		this.cnResourceAvailable = true;
 	}
 
@@ -62,7 +57,7 @@ public class ReplaceEXDF {
 		// 根据传入的文件进行遍历
         int fileCount = 0;
 		for (String replaceFile : fileList) {
-            textPathPanel.percentShow((double)fileCount++ / (double)fileList.size());
+            textPatchPanel.percentShow((double)fileCount++ / (double)fileList.size());
 			if (replaceFile.toUpperCase().endsWith(".EXH")) {
 				System.out.println("Now File : " + replaceFile);
 				// 准备好文件目录名和文件名

@@ -3,7 +3,7 @@ package link.teemo.sqpack
 import com.shenou.fs.core.utils.res.Config
 import link.teemo.sqpack.model.SqPackDatFile
 import link.teemo.sqpack.model.SqPackIndex
-import link.teemo.sqpack.swing.TextPathPanel
+import link.teemo.sqpack.swing.TextPatchPanel
 import link.teemo.sqpack.util.FFCRC
 import java.io.File
 import java.io.FileNotFoundException
@@ -16,7 +16,7 @@ class ReplaceEXDFKt {
 
         @JvmStatic
         @Throws(Exception::class)
-        fun replace(pathToIndex: String, resourceFolder: String, panel : TextPathPanel) {
+        fun replace(pathToIndex: String, resourceFolder: String, panel : TextPatchPanel) {
             var exhFile: MutableList<String> = mutableListOf()
             // 拉出root.exl 根据内容插到待List中
             println("Loading Root File...")

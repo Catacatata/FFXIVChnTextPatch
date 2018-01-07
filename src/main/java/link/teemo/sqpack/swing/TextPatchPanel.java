@@ -12,14 +12,16 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 
-public class TextPathPanel extends JFrame implements ActionListener {
+public class TextPatchPanel extends JFrame implements ActionListener {
 
     private static Point origin = new Point();
     private static String title = "提莫苑|FFXIV汉化 β-3.0";
 
     private JLabel title_lable = new JLabel(title);
     private Dimension dimension;
+
     private JButton configButton = new JButton("设置");
+    private JButton toolButton = new JButton("工具");
     private JButton closeButton = new JButton("x");
     private JPanel titlePanel = new JPanel();
     private JPanel bodyPanel = new JPanel();
@@ -30,7 +32,7 @@ public class TextPathPanel extends JFrame implements ActionListener {
     private JPanel percentBackPanel = new JPanel();
     private JPanel percentFrontPanel = new JPanel();
 
-    public TextPathPanel(){
+    public TextPatchPanel(){
         super(title);
         setUndecorated(true);
         Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -54,7 +56,7 @@ public class TextPathPanel extends JFrame implements ActionListener {
         title_lable.setForeground(new Color(255,255,255));
         add(title_lable,0);
         //最小化以及关闭
-        configButton.setBounds(220, 0, 50, 30);
+        configButton.setBounds(230, 0, 25, 30);
         configButton.setFont(new Font("Microsoft Yahei",Font.BOLD,12));
         configButton.setForeground(new Color(255,255,255));
         configButton.setMargin(new Insets(0, 0, 0, 0));
@@ -65,6 +67,18 @@ public class TextPathPanel extends JFrame implements ActionListener {
         configButton.setFocusable(false);
         configButton.addActionListener(this);
         add(configButton,0);
+
+        toolButton.setBounds(200, 0, 25, 30);
+        toolButton.setFont(new Font("Microsoft Yahei",Font.BOLD,12));
+        toolButton.setForeground(new Color(255,255,255));
+        toolButton.setMargin(new Insets(0, 0, 0, 0));
+        toolButton.setBorder(null);
+        toolButton.setOpaque(false);
+        toolButton.setIconTextGap(0);
+        toolButton.setContentAreaFilled(false);
+        toolButton.setFocusable(false);
+        toolButton.addActionListener(this);
+        add(toolButton,0);
 
         closeButton.setBounds(260, 0, 20, 30);
         closeButton.setFont(new Font("Microsoft Yahei",Font.BOLD,12));
@@ -194,6 +208,6 @@ public class TextPathPanel extends JFrame implements ActionListener {
     }
 
     public static void main(String[] args) throws  Exception {
-        TextPathPanel s = new TextPathPanel();
+        TextPatchPanel s = new TextPatchPanel();
     }
 }

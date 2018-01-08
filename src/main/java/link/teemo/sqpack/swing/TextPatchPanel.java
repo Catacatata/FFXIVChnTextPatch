@@ -15,7 +15,7 @@ import java.io.File;
 public class TextPatchPanel extends JFrame implements ActionListener {
 
     private static Point origin = new Point();
-    private static String title = "提莫苑|FFXIV汉化 β-3.0";
+    private static String title = "提莫苑|FFXIV汉化 β-4.1";
 
     private JLabel title_lable = new JLabel(title);
     private Dimension dimension;

@@ -264,7 +264,7 @@ public class ToolPanel extends JFrame implements ActionListener {
                     outputTextArea.setText("无符合内容的结果");
                 }else{
                     outputTextArea.setText("");
-                    outputTextArea.append("搜索关键字 " + strSearchInsert.getText() + " 类型 " + (String)strSearchOption.getSelectedItem() + "\n");
+                    outputTextArea.append("搜索关键字 " + strSearchInsert.getText() + "\n类型 " + (String)strSearchOption.getSelectedItem() + "\n");
                     outputTextArea.append("搜索到符合的结果 " + locates.size() + "条\n\n");
                     outputTextArea.append("文件|目录数|字符列|内容|字符串\n");
                     for(EXDStringLocate locate: locates){

@@ -15,7 +15,7 @@ import java.io.File;
 public class TextPatchPanel extends JFrame implements ActionListener {
 
     private static Point origin = new Point();
-    private static String title = "提莫苑|FFXIV汉化 β-4.1";
+    private static String title = "提莫苑|FFXIV国际化 β-4.1";
 
     private JLabel title_lable = new JLabel(title);
     private Dimension dimension;
@@ -51,7 +51,7 @@ public class TextPatchPanel extends JFrame implements ActionListener {
         bodyPanel.setBackground(new Color(255,255,255));
         bodyPanel.setBorder(new MatteBorder(0, 1, 1, 1, new Color(110,110,110)));
         add(bodyPanel);
-        title_lable.setBounds(10, 0, 150, 30);
+        title_lable.setBounds(10, 0, 160, 30);
         title_lable.setFont(new Font("Microsoft Yahei",Font.BOLD,13));
         title_lable.setForeground(new Color(255,255,255));
         add(title_lable,0);
@@ -68,17 +68,17 @@ public class TextPatchPanel extends JFrame implements ActionListener {
         configButton.addActionListener(this);
         add(configButton,0);
 
-        toolButton.setBounds(200, 0, 25, 30);
-        toolButton.setFont(new Font("Microsoft Yahei",Font.BOLD,12));
-        toolButton.setForeground(new Color(255,255,255));
-        toolButton.setMargin(new Insets(0, 0, 0, 0));
-        toolButton.setBorder(null);
-        toolButton.setOpaque(false);
-        toolButton.setIconTextGap(0);
-        toolButton.setContentAreaFilled(false);
-        toolButton.setFocusable(false);
-        toolButton.addActionListener(this);
-        add(toolButton,0);
+//        toolButton.setBounds(200, 0, 25, 30);
+//        toolButton.setFont(new Font("Microsoft Yahei",Font.BOLD,12));
+//        toolButton.setForeground(new Color(255,255,255));
+//        toolButton.setMargin(new Insets(0, 0, 0, 0));
+//        toolButton.setBorder(null);
+//        toolButton.setOpaque(false);
+//        toolButton.setIconTextGap(0);
+//        toolButton.setContentAreaFilled(false);
+//        toolButton.setFocusable(false);
+//        toolButton.addActionListener(this);
+//        add(toolButton,0);
 
         closeButton.setBounds(260, 0, 20, 30);
         closeButton.setFont(new Font("Microsoft Yahei",Font.BOLD,12));
@@ -105,6 +105,24 @@ public class TextPatchPanel extends JFrame implements ActionListener {
             }
         });
         //主要面板
+        String lang = Config.getProperty("Language");
+        switch(lang){
+            case "日文":
+                lang = "日化";
+                break;
+            case "英文":
+                lang = "英化";
+                break;
+            case "法文":
+                lang = "法化";
+                break;
+            case "德文":
+                lang = "德化";
+                break;
+            default:
+                lang = "日化";
+        }
+        replaceButton.setText(lang);
         replaceButton.setBounds(30, 40, 80, 60);
         replaceButton.setFont(new Font("Microsoft Yahei",Font.PLAIN,25));
         replaceButton.setForeground(new Color(110,110,110));
@@ -137,7 +155,7 @@ public class TextPatchPanel extends JFrame implements ActionListener {
         percentFrontPanel.setBorder(new MatteBorder(0, 0, 0, 0, new Color(110,110,110)));
         add(percentFrontPanel,0);
 
-        if(new File("backup").exists() && new File("backup").isDirectory() && new File("backup").listFiles().length == 6){
+        if(new File("backup").exists() && new File("backup").isDirectory() && new File("backup").listFiles().length == 3){
             rollbackButton.setEnabled(true);
         }else{
             rollbackButton.setEnabled(false);
@@ -154,7 +172,7 @@ public class TextPatchPanel extends JFrame implements ActionListener {
             if(isFFXIVFloder(path)){
                 //备份原文件
                 String resourceFolder = path + File.separator + "game" + File.separator + "sqpack" + File.separator + "ffxiv";
-                String[] resourceNames = {"000000.win32.dat0", "000000.win32.index", "000000.win32.index2", "0a0000.win32.dat0", "0a0000.win32.index", "0a0000.win32.index2"};
+                String[] resourceNames = {"0a0000.win32.dat0", "0a0000.win32.index", "0a0000.win32.index2"};
                 for(String resourceName :resourceNames){
                     File resourceFile = new File(resourceFolder + File.separator + resourceName);
                     if(resourceFile.exists() && resourceFile.isFile()){
@@ -166,7 +184,7 @@ public class TextPatchPanel extends JFrame implements ActionListener {
                 Thread replaceFileThread = new Thread(replaceThread);
                 replaceFileThread.start();
             }else{
-                JOptionPane.showMessageDialog(null, "<html><body>请选择正确的游戏根目录<br />目录预设名为：<br />FINAL FANTASY XIV - A Realm Reborn</body></html>", "路径错误",JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "<html><body>请选择正确的游戏根目录<br />目录预设名为：<br />最终幻想XIV</body></html>", "路径错误",JOptionPane.ERROR_MESSAGE);
                 this.setVisible(false);
                 new ConfigApplicationPanel();
             }
@@ -180,7 +198,7 @@ public class TextPatchPanel extends JFrame implements ActionListener {
                 Thread rollbackFileThread = new Thread(rollbackThread);
                 rollbackFileThread.start();
             }else{
-                JOptionPane.showMessageDialog(null, "<html><body>请选择正确的游戏根目录<br />目录预设名为：<br />FINAL FANTASY XIV - A Realm Reborn</body></html>", "路径错误",JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "<html><body>请选择正确的游戏根目录<br />目录预设名为：<br />最终幻想XIV</body></html>", "路径错误",JOptionPane.ERROR_MESSAGE);
                 this.setVisible(false);
                 new ConfigApplicationPanel();
             }

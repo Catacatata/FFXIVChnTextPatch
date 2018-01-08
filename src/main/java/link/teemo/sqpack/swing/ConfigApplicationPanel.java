@@ -22,7 +22,7 @@ import javax.swing.border.MatteBorder;
 public class ConfigApplicationPanel extends JFrame implements ActionListener {
 
     private static Point origin = new Point();
-    private static String title = "提莫苑|汉化设置";
+    private static String title = "提莫苑|国际化设置";
     private JLabel title_lable = new JLabel(title);
     private Dimension dimension;
     private JButton closeButton = new JButton("x");
@@ -113,8 +113,10 @@ public class ConfigApplicationPanel extends JFrame implements ActionListener {
         langLable.setForeground(new Color(110,110,110));
         add(langLable,0);
         langLableVal = new JComboBox<String>();
-        langLableVal.addItem("简体中文");
-        langLableVal.addItem("正體中文");
+        langLableVal.addItem("日文");
+        langLableVal.addItem("英文");
+        langLableVal.addItem("德文");
+        langLableVal.addItem("法文");
         langLableVal.setBounds(100, 70, 160, 23);
         langLableVal.setFont(new Font("Microsoft Yahei",Font.BOLD,13));
         langLableVal.setForeground(new Color(110,110,110));
@@ -157,7 +159,7 @@ public class ConfigApplicationPanel extends JFrame implements ActionListener {
                     pathField.setText(filePath);
                     pathField.setCaretPosition(0);
                 }else{
-                    JOptionPane.showMessageDialog(null, "<html><body>请选择正确的游戏根目录<br />目录预设名为：<br />FINAL FANTASY XIV - A Realm Reborn</body></html>", "路径错误",JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "<html><body>请选择正确的游戏根目录<br />目录预设名为：<br />最终幻想XIV</body></html>", "路径错误",JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -171,7 +173,7 @@ public class ConfigApplicationPanel extends JFrame implements ActionListener {
                 this.setVisible(false);
                 new TextPatchPanel();
             }else{
-                JOptionPane.showMessageDialog(null, "<html><body>请选择正确的游戏根目录<br />目录预设名为：<br />FINAL FANTASY XIV - A Realm Reborn</body></html>", "路径错误",JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "<html><body>请选择正确的游戏根目录<br />目录预设名为：<br />最终幻想XIV</body></html>", "路径错误",JOptionPane.ERROR_MESSAGE);
             }
         }
         if (e.getSource() == closeButton || e.getSource() == exitButton) {

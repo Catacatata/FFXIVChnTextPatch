@@ -101,7 +101,7 @@ public class ReplaceEXDF {
 					// 根据头文件 轮询资源文件
 					for (EXDFPage exdfPage : exhSE.getPages()) {
 						// 获取资源文件的CRC
-						Integer exdFileCRCJA = FFCRC.ComputeCRC((fileName.replace(".EXH", "_" + String.valueOf(exdfPage.pageNum) + "_JA.EXD")).toLowerCase().getBytes());
+						Integer exdFileCRCJA = FFCRC.ComputeCRC((fileName.replace(".EXH", "_" + String.valueOf(exdfPage.pageNum) + "_CHS.EXD")).toLowerCase().getBytes());
 						// 进行CRC存在校验
 						System.out.println("Replace File : " + fileName.substring(0, fileName.indexOf(".")));
 						// 提取对应的文本文件
@@ -119,7 +119,24 @@ public class ReplaceEXDF {
 						cnEXDFileAvailable = true;
 						if (cnEXHFileAvailable){
 							try{
-								Integer exdFileCRCCN = FFCRC.ComputeCRC((fileName.replace(".EXH", "_" + String.valueOf(exdfPage.pageNum) + "_CHS.EXD")).toLowerCase().getBytes());
+								String lang = Config.getProperty("Language");
+								switch(lang){
+									case "日文":
+										lang = "_JA.EXD";
+										break;
+									case "英文":
+										lang = "_EN.EXD";
+										break;
+									case "法文":
+										lang = "_FR.EXD";
+										break;
+									case "德文":
+										lang = "_DE.EXD";
+										break;
+									default:
+										lang = "_JA.EXD";
+								}
+								Integer exdFileCRCCN = FFCRC.ComputeCRC((fileName.replace(".EXH", "_" + String.valueOf(exdfPage.pageNum) + lang)).toLowerCase().getBytes());
 								SqPackIndexFile exdIndexFileCN = indexCN.get(filePatchCRC).getFiles().get(exdFileCRCCN);
 								byte[] exdFileCN = extractFile(pathToIndexCN, exdIndexFileCN.getOffset());
 								EXDFFile chs_exd = new EXDFFile(exdFileCN);
@@ -221,44 +238,44 @@ public class ReplaceEXDF {
 //			System.out.println(Config.getProperty("Language"));
 //		}
 
-		if(Config.getProperty("Language").equals("繁體中文") || Config.getProperty("Language").equals("正體中文")) {
-			try {
-				byte[] newFFXIVStringBytes = new byte[0];
-
-				byte[] chBytesMirror = new byte[chBytes.length];
-
-				ByteBuffer buffIn = ByteBuffer.wrap(chBytes);
-				buffIn.order(ByteOrder.LITTLE_ENDIAN);
-
-				ByteBuffer buffOut = ByteBuffer.wrap(chBytesMirror);
-				buffIn.order(ByteOrder.LITTLE_ENDIAN);
-
-				while (buffIn.hasRemaining()) {
-					byte b = buffIn.get();
-					if (b == 2) {
-						byte[] bytes = new byte[buffOut.position()];
-						buffOut.position(0);
-						buffOut.get(bytes);
-						buffOut.clear();
-						newFFXIVStringBytes = ArrayUtil.append(newFFXIVStringBytes, ChineseHelper.convertToTraditionalChinese(new String(bytes, "UTF-8")).getBytes("UTF-8"));
-						newFFXIVStringBytes = ArrayUtil.append(newFFXIVStringBytes, processPacket(buffIn));
-					} else {
-						buffOut.put(b);
-					}
-				}
-				if (buffOut.position() != 0) {
-					byte[] bytes = new byte[buffOut.position()];
-					buffOut.position(0);
-					buffOut.get(bytes);
-					buffOut.clear();
-					newFFXIVStringBytes = ArrayUtil.append(newFFXIVStringBytes, ChineseHelper.convertToTraditionalChinese(new String(bytes, "UTF-8")).getBytes("UTF-8"));
-				}
-
-
-				return newFFXIVStringBytes;
-			}catch (Exception e){}
-
-		}
+//		if(Config.getProperty("Language").equals("繁體中文") || Config.getProperty("Language").equals("正體中文")) {
+//			try {
+//				byte[] newFFXIVStringBytes = new byte[0];
+//
+//				byte[] chBytesMirror = new byte[chBytes.length];
+//
+//				ByteBuffer buffIn = ByteBuffer.wrap(chBytes);
+//				buffIn.order(ByteOrder.LITTLE_ENDIAN);
+//
+//				ByteBuffer buffOut = ByteBuffer.wrap(chBytesMirror);
+//				buffIn.order(ByteOrder.LITTLE_ENDIAN);
+//
+//				while (buffIn.hasRemaining()) {
+//					byte b = buffIn.get();
+//					if (b == 2) {
+//						byte[] bytes = new byte[buffOut.position()];
+//						buffOut.position(0);
+//						buffOut.get(bytes);
+//						buffOut.clear();
+//						newFFXIVStringBytes = ArrayUtil.append(newFFXIVStringBytes, ChineseHelper.convertToTraditionalChinese(new String(bytes, "UTF-8")).getBytes("UTF-8"));
+//						newFFXIVStringBytes = ArrayUtil.append(newFFXIVStringBytes, processPacket(buffIn));
+//					} else {
+//						buffOut.put(b);
+//					}
+//				}
+//				if (buffOut.position() != 0) {
+//					byte[] bytes = new byte[buffOut.position()];
+//					buffOut.position(0);
+//					buffOut.get(bytes);
+//					buffOut.clear();
+//					newFFXIVStringBytes = ArrayUtil.append(newFFXIVStringBytes, ChineseHelper.convertToTraditionalChinese(new String(bytes, "UTF-8")).getBytes("UTF-8"));
+//				}
+//
+//
+//				return newFFXIVStringBytes;
+//			}catch (Exception e){}
+//
+//		}
 		return chBytes;
 	}
 

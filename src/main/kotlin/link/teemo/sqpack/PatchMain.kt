@@ -2,6 +2,7 @@ package link.teemo.sqpack
 
 import com.shenou.fs.core.utils.res.Config
 import link.teemo.sqpack.swing.ConfigApplicationPanel
+import link.teemo.sqpack.swing.TextPatchPanel
 import java.io.*
 
 class PatchMain {
@@ -13,7 +14,7 @@ class PatchMain {
             Config.setConfigResource("conf" + File.separator + "global.properties")
             val path = Config.getProperty("GamePath")
             if(isFFXIVFloder(path)){
-                TextPathPanel()
+                TextPatchPanel()
             }else{
                 ConfigApplicationPanel()
             }

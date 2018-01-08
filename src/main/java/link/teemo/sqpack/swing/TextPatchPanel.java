@@ -189,6 +189,9 @@ public class TextPatchPanel extends JFrame implements ActionListener {
             this.setVisible(false);
             new ConfigApplicationPanel();
         }
+        if (e.getSource() == toolButton) {
+            new ToolPanel();
+        }
         if (e.getSource() == closeButton) {
             System.exit(0);
         }

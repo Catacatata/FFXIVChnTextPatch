@@ -220,6 +220,7 @@ public class ToolPanel extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         if (actionEvent.getSource() == closeButton) {
+            Config.reloadConfig();
             this.setVisible(false);
         }
         if (actionEvent.getSource() == strTransButton) {

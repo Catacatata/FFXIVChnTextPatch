@@ -149,7 +149,7 @@ public class ReplaceEXDF {
 							LERandomBytes chunk = new LERandomBytes(new byte[exdfEntryJA.getChunk().length]);
 							chunk.write(exdfEntryJA.getChunk());
 							byte[] newFFXIVString = new byte[0];
-							int stringCount = 0;
+							int stringCount = 1;
 							for ( EXDFDataset exdfDatasetSE : exhSE.getDatasets()) {
 								// 只限文本内容
 								if (exdfDatasetSE.type == 0) {
@@ -169,7 +169,10 @@ public class ReplaceEXDF {
 										chunk.seek(exdfDatasetSE.offset);
 										chunk.writeIntBigEndian(newFFXIVString.length);
 										// 更新文本内容
-										String transKey = replaceFile.substring(0, replaceFile.lastIndexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex) + "_" + String.valueOf(stringCount + 1);
+										if(replaceFile.equals("EXD/quest/030/StmBdi102_03004.EXH") && listEntryIndex.equals(26)){
+											System.out.println("TEST");
+										}
+										String transKey = replaceFile.substring(0, replaceFile.lastIndexOf(".")).toLowerCase() + "_" + String.valueOf(listEntryIndex) + "_" + String.valueOf(stringCount);
 										if (Config.getConfigResource("transtable") != null && Config.getProperty("transtable", transKey) != null){
 											newFFXIVString = ArrayUtil.append(newFFXIVString, Base64.decode(Config.getProperty("transtable", transKey)));
 										}else if (Config.getConfigResource("transtring") != null && Config.getProperty("transtring", jaStr) != null){

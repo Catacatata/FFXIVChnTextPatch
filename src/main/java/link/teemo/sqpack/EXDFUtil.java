@@ -66,7 +66,7 @@ public class EXDFUtil {
                         EXDFEntry exdfEntryJA = new EXDFEntry(listEntry.getValue(), exhSE.getDatasetChunkSize());
                         LERandomBytes chunk = new LERandomBytes(new byte[exdfEntryJA.getChunk().length]);
                         chunk.write(exdfEntryJA.getChunk());
-                        int stringCount = 0;
+                        int stringCount = 1;
                         for (EXDFDataset exdfDatasetSE : exhSE.getDatasets()) {
                             // 只限文本内容
                             if (exdfDatasetSE.type == 0) {
@@ -74,7 +74,6 @@ public class EXDFUtil {
                                 String jaStr = new String(jaBytes, "UTF-8");
                                 if ((pattern.matcher(jaStr).find() && jaStr.contains("_"))
                                         || (jaBytes.length > 4 && jaBytes[0] == 0x02 && (jaBytes[1] == 0x28 || jaBytes[1] == 0x40) && ((int) jaBytes[2] + 3 == jaBytes.length))) {
-                                    continue;
                                 } else {
                                     switch(strTransOption){
                                         case "String":
@@ -82,7 +81,7 @@ public class EXDFUtil {
                                                 EXDStringLocate locate = new EXDStringLocate();
                                                 locate.setFileName(replaceFile);
                                                 locate.setIndex(listEntryIndex);
-                                                locate.setStrCount(stringCount + 1);
+                                                locate.setStrCount(stringCount);
                                                 locate.setStrBody(jaBytes);
                                                 locates.add(locate);
                                             }
@@ -92,7 +91,7 @@ public class EXDFUtil {
                                                 EXDStringLocate locate = new EXDStringLocate();
                                                 locate.setFileName(replaceFile);
                                                 locate.setIndex(listEntryIndex);
-                                                locate.setStrCount(stringCount + 1);
+                                                locate.setStrCount(stringCount);
                                                 locate.setStrBody(jaBytes);
                                                 locates.add(locate);
                                             }
